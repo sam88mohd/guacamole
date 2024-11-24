@@ -1,9 +1,29 @@
 ---
  - name: Provisioning guacamole
    hosts: debian12
+   become: true
    tasks:
-    - name: Update package cache
-      become: true
+    - name: Add dependencies for guacamole
       apt:
         update_cache: yes
-        cache_valid_time: 3600
+        state: latest
+        pkg:
+          - libcairo2-dev
+          - libjpeg62-turbo-dev
+          - libpng-dev
+          - libtool-bin
+          - uuid-dev
+          - libavcodec-dev
+          - libavformat-dev
+          - libavutil-dev
+          - libswscale-dev
+          - freerdp2-dev
+          - libpango1.0-dev
+          - libssh2-1-dev
+          - libtelnet-dev
+          - libvncserver-dev
+          - libwebsockets-dev
+          - libpulse-dev
+          - libssl-dev
+          - libvorbis-dev
+          - libwebp-dev
