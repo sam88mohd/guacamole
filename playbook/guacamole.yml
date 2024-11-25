@@ -2,6 +2,11 @@
  - name: Provisioning guacamole
    hosts: debian12
    become: true
+   vars:
+    installer_dir: /usr/share/guacamole
+    guacamole_server: guacamole-server-1.5.5.tar.gz
+    guacamole_server_dir: "{{ installer_dir }}/guacamole-server-1.5.5"
+    guacamole_server_file: "{{ installer_dir }}/{{ guacamole_server }}"
    tasks:
     - name: Add dependencies for guacamole
       apt:
@@ -27,3 +32,43 @@
           - libssl-dev
           - libvorbis-dev
           - libwebp-dev
+          - tar
+          - build-essential
+          - libossp-uuid-dev
+          - libpango1.0-dev
+    - name: Create guacamole dir
+      file:
+        path: "{{ installer_dir }}"
+        state: directory
+    - name: Copy guacamole installer
+      copy:
+        src: "{{ guacamole_server }}"
+        dest: "{{ guacamole_server_file }}"
+      notify:
+        - Unarchive guacamole installer
+        - Configure guacamole server  makefile
+        - Build and install guacamole server
+        - Update ldconfig
+        - Start guacd
+   handlers:
+    - name: Unarchive guacamole installer
+      shell:
+        cmd: tar -xvf {{ guacamole_server_file }}
+        chdir: "{{ installer_dir }}"
+    - name: Configure guacamole server  makefile
+      shell:
+        cmd: "./configure --with-init-dir=/etc/init.d --enable-allow-freerdp-snapshots"
+        chdir: "{{ guacamole_server_dir }}"
+    - name: Build and install guacamole server
+      make:
+        chdir: "{{ guacamole_server_dir }}"
+        target: install
+      become: true
+    - name: Update ldconfig
+      command: ldconfig
+    - name: Start guacd
+      service:
+        daemon_reload: true
+        name: guacd
+        state: started
+        enabled: true
